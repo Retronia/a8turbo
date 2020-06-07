@@ -44,7 +44,7 @@ def generate(fn_xex, fn_wav, patched=False):
 	# generate the FSK of the TRUBO SOFTWARE header and pong game
         header=turbo_data.ts_header_patched if patched else turbo_data.ts_header
 	for i in header: cas.rblock(i['igr'], i['data'])
-        if patched:
+        if not patched:
 	  cas.fsk_falling(4, 6705)
 	for i in turbo_data.ts_pong: cas.rblock(i['igr'], i['data'])
 	
