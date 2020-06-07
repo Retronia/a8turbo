@@ -8,18 +8,18 @@ def blocks(d):
 	left=len(d)
 
 	while left>=128:
-		b = [0x55, 0x55, 0xFC] + [ord(x) for x in d[bn*128:bn*128+128]] + [bn + 12, 0]
+		b = [0x55, 0x55, 0xFC] + [ord(x) for x in d[bn*128:bn*128+128]] + [(bn + 12)&255, (bn + 12)>>8]
 		left -= 128
 		bn += 1
 		yield b
 
 	if left>0:
 		d = d[bn*128:]
-		b = [0x55, 0x55, 0xFA] + [ord(x) for x in d] + [0x00]*(127-left) + [left, bn + 12, 0]
+		b = [0x55, 0x55, 0xFA] + [ord(x) for x in d] + [0x00]*(127-left) + [left, (bn + 12)&255, (bn + 12)>>8]
 		bn +=1
 		yield b
 
-	yield [0x55, 0x55, 0xFE] + [0x00]*128 + [bn + 12, 0]
+	yield [0x55, 0x55, 0xFE] + [0x00]*128 + [(bn + 12)&255, (bn + 12)>>8]
 
 def generate(fn_xex, fn_wav):
 	# create the A8 WAV file
@@ -32,7 +32,7 @@ def generate(fn_xex, fn_wav):
 	sys.stdout.write("XEX size: %d\n" % len(xexdata))
 
 	# calculate how many sectors and modify the counter (the crc for this sector is ignored)
-	a8_sectors = (len(xexdata)+256) / 128
+	a8_sectors = (len(xexdata)+255) / 128
 	sys.stdout.write("A8 tape sectors %d\n" % a8_sectors)
 
 	turbo_data.ts_pong[1]['data'][563]=0x6f-(a8_sectors%10)
