@@ -7,5 +7,5 @@ It is totally self-contained and don't use any lib to generate the FSK data and 
 
 # usage
 ```
-python a8turbo.py <xexfile> <wavfile>
+python a8turbo.py [--patched] <xexfile> <wavfile>
 ```
