@@ -21,7 +21,7 @@ def blocks(d):
 
 	yield [0x55, 0x55, 0xFE] + [0x00]*128 + [(bn + 12)&255, (bn + 12)>>8]
 
-def generate(fn_xex, fn_wav):
+def generate(fn_xex, fn_wav, patched=False):
 	# create the A8 WAV file
 	cas=a8cas(fn_wav)
 
@@ -42,15 +42,17 @@ def generate(fn_xex, fn_wav):
 	turbo_data.ts_pong[1]['data'][561]=0x6f-(a8_sectors%10)
 	
 	# generate the FSK of the TRUBO SOFTWARE header and pong game
-	for i in turbo_data.ts_header: cas.rblock(i['igr'], i['data'])
-	cas.fsk_falling(4, 6705)
+        header=turbo_data.ts_header_patched if patched else turbo_data.ts_header
+	for i in header: cas.rblock(i['igr'], i['data'])
+        if patched:
+	  cas.fsk_falling(4, 6705)
 	for i in turbo_data.ts_pong: cas.rblock(i['igr'], i['data'])
 	
 	# generate the FSK of the XEX dara
-	i=0
+	igr=3200
 	for b in blocks(xexdata):
-		cas.rblock([3200,100][i], b+[cas.csum_carry(b)])
-		if i==0: i=1
+		cas.rblock(igr, b+[cas.csum_carry(b)])
+		igr=100
 
 	# the tail needed
 	cas.fsk_falling(1049, 1341)
@@ -59,7 +61,13 @@ def generate(fn_xex, fn_wav):
 	cas.finalize_wav()
 	
 if len(sys.argv) > 2:
-	generate(sys.argv[1], sys.argv[2])
+        patched=False
+        o=0
+        if sys.argv[1]=="--patched":
+            patched=True
+            o+=1
+
+	generate(sys.argv[1+o], sys.argv[2+o], patched)
 	sys.stdout.write("done!\n")
 else:
-	sys.stderr.write("usage: %s <xexfile> <wavfile>\n" % sys.argv[0])
+	sys.stderr.write("usage: %s [--patched] <xexfile> <wavfile>\n" % sys.argv[0])
